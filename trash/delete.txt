@@ -1,0 +1,130 @@
+void sterge_autorul(Arb_Trie_autor* node, char litera, char* autor, int* poz, int* stop)
+{
+    if(!node){
+        return;
+    }
+    int i, nr, index;
+    nr = (int)litera;
+    index = determinare_index(nr);
+    if(node->copil[index] != NULL){
+        *poz += 1;
+        sterge_autorul(node->copil[index], autor[*poz], autor, poz, stop);
+    }else{
+        printf("S-a terminat.\n");
+    }
+    if(node->frunza == 1){
+        *stop = 2;
+        return;
+    }
+    for(i = 0; i < N; i++){
+        if(node->copil[i] != NULL){
+            stop += 1;
+        }
+    }
+    if(*stop > 1){
+        return;
+    }
+    if(node->carti != NULL){
+        // Arb_Trie* lista = (Arb_Trie*)node->carti;
+        // free(lista->);
+        // free(carte->titlu);
+        free((Arb_Trie*)node->carti);
+    }
+    free(node);
+    node = NULL;
+}
+
+void sterge_titlul(Arb_Trie* node, char litera, char* titlu, int* poz, int* stop)
+{
+    if(!node){
+        return;
+    }
+    int i, nr, index;
+    nr = (int)litera;
+    index = determinare_index(nr);
+    // printf("-%c\n", node->copil[index]->c);
+    if(node->copil[index] != NULL){
+        *poz += 1;
+        sterge_titlul(node->copil[index], titlu[*poz], titlu, poz, stop);
+    }else{
+        printf("S-a terminat.\n");
+    }
+    if(node->frunza == 1){
+        *stop = 2;
+        return;
+    }
+    for(i = 0; i < N; i++){
+        if(node->copil[i] != NULL){
+            stop += 1;
+        }
+    }
+    if(*stop > 1){
+        return;
+    }
+    printf("#\n");
+    // if(node->carte != NULL){
+    //     Carte* carte = (Carte*)node->carte;
+    //     free(carte->autor);
+    //     free(carte->titlu);
+    //     free(carte);
+    // }
+    free(node);
+    node = NULL;
+}
+
+void delete_autor2(Arb_Trie_autor* autori, char* autor)
+{
+    int i, nr, index;
+    Arb_Trie_autor *A = autori;
+    for(i = 0; autor[i] != '\0'; i++){
+        nr = (int)autor[i];
+        index = determinare_index(nr);
+        if(A->copil[index] == NULL){
+            printf("NU EXISTA\n");
+            return;
+        }
+        A = A->copil[index];
+    }
+
+    int *poz = calloc(1, sizeof(int));
+    int *stop = calloc(1, sizeof(int));
+    sterge_autorul(autori, autor[0], autor, poz, stop);
+
+
+}
+
+
+void delete_book2(Arb_Trie* titluri, Arb_Trie_autor* autori, char* titlu, FILE* out, int x)
+{
+    int i, nr, index;
+    Arb_Trie *T = titluri;
+    for(i = 0; titlu[i] != '\0'; i++){
+        nr = (int)titlu[i];
+        index = determinare_index(nr);
+        if(T->copil[index] == NULL){
+            if(x){
+                fprintf(out, "Cartea %s nu exista in recomandarile tale.\n", titlu);
+            }
+            printf("NU EXISTA\n");
+            return;
+        }
+        T = T->copil[index];
+    }
+    int *poz = calloc(1, sizeof(int));
+    int *stop = calloc(1, sizeof(int));
+    sterge_titlul(titluri, titlu[0], titlu, poz, stop);
+
+    char* autor = malloc(40 * sizeof(char));
+    Arb_Trie_autor* A = autori;
+
+    determinare_autor(titluri, titlu, autor);
+    for(i = 0; autor[i]!='\0'; i++){
+        nr = (int)autor[i];
+        index = determinare_index(nr);
+        autori = autori->copil[index];  
+    }
+    Arb_Trie *lista_carti = ((Arb_Trie*)autori->carti);
+    delete_book2(lista_carti, autori, titlu, out, 0);
+
+    delete_autor2(A, autor);
+}
